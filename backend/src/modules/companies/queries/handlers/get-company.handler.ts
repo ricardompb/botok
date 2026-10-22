@@ -16,10 +16,8 @@ export class GetCompanyHandler implements IQueryHandler<GetCompanyQuery> {
   async execute({ id }: GetCompanyQuery): Promise<CompanyDetailDto> {
     const company = await this.repo.findById(id);
     if (!company) throw new NotFoundException('Empresa não encontrada.');
-    const [agents, active] = await Promise.all([
-      this.agents.findAll(),
-      this.repo.activeUsersByTenant(),
-    ]);
+    const agents = await this.agents.findAll();
+    const active = await this.repo.activeUsersByTenant();
     return {
       id: company.id,
       name: company.name,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
+import { IsNull, LessThan, type DeepPartial } from 'typeorm';
 import { TenantDb } from '../../../common/tenancy/tenant-db.js';
 import { ChatSession } from '../entities/chat-session.entity.js';
 
@@ -11,8 +11,20 @@ export class ChatSessionsRepository {
     return this.db.repo(ChatSession);
   }
 
-  findOwned(id: string, userId: string, agentId: string) {
-    return this.repo.findOneBy({ id, userId, agentId, ...this.db.scope() });
+  /** Sessão em andamento do próprio usuário, com o mesmo assistente. */
+  findOpen(id: string, userId: string, agentId: string) {
+    return this.repo.findOneBy({ id, userId, agentId, endedAt: IsNull(), ...this.db.scope() });
+  }
+
+  findOwned(id: string, userId: string) {
+    return this.repo.findOneBy({ id, userId, ...this.db.scope() });
+  }
+
+  findInactiveSince(limit: Date) {
+    return this.repo.find({
+      where: { endedAt: IsNull(), lastActivityAt: LessThan(limit), ...this.db.scope() },
+      take: 100,
+    });
   }
 
   create(data: DeepPartial<ChatSession>) {

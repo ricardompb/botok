@@ -11,8 +11,8 @@ export function validateConnection(dto: SaveAgentDto): string {
   if (url.search || url.hash) {
     return 'Use uma URL sem parâmetros ou fragmentos; não inclua credenciais no endereço.';
   }
-  if (dto.auth === 'vault' && !dto.secretRef?.trim()) {
-    return 'Informe somente a referência fictícia do segredo, nunca a chave.';
+  if (dto.auth === 'vault') {
+    return 'O Foundry aceita apenas Microsoft Entra ID (identidade do backend); credencial em cofre não é suportada.';
   }
   return '';
 }

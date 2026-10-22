@@ -45,8 +45,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, Props>(function Composer
         </div>
       </form>
       <p className="composer-note">
-        Respostas ilustrativas neste protótipo. Não informe dados reais ou confidenciais. Revise o conteúdo antes
-        de utilizá-lo.
+        Respostas geradas por IA. Não informe dados reais ou confidenciais. Revise o conteúdo antes de utilizá-lo.
       </p>
     </div>
   );

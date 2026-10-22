@@ -14,11 +14,9 @@ export class GetAdminStatsHandler implements IQueryHandler<GetAdminStatsQuery> {
   ) {}
 
   async execute(): Promise<AdminStatsDto> {
-    const [companies, activeUsers, activeAgents] = await Promise.all([
-      this.companies.findAll(),
-      this.users.countActive(),
-      this.agents.countActive(),
-    ]);
+    const companies = await this.companies.findAll();
+    const activeUsers = await this.users.countActive();
+    const activeAgents = await this.agents.countActive();
     return {
       companies: companies.length,
       licenses: companies.reduce((n, c) => n + c.licenses, 0),

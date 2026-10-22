@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { from, lastValueFrom } from 'rxjs';
 import type { AuthUser } from '../auth/auth-user.js';
+import { LONG_RUNNING_KEY } from './long-running.decorator.js';
 import { TenantAccessLog } from './tenant-access-log.entity.js';
 import type { TenantContext } from './tenant-context.js';
 import { TenantDb } from './tenant-db.js';
@@ -23,10 +24,9 @@ export class TenantContextInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler) {
     const request = context.switchToHttp().getRequest();
-    const tenantParam = this.reflector.getAllAndOverride<string>(TENANT_PARAM_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const targets = [context.getHandler(), context.getClass()];
+    const tenantParam = this.reflector.getAllAndOverride<string>(TENANT_PARAM_KEY, targets);
+    const longRunning = this.reflector.getAllAndOverride<boolean>(LONG_RUNNING_KEY, targets);
     const { tenant, audit } = resolveContext(request.user, tenantParam, request.params);
 
     const operation = async () => {
@@ -39,7 +39,8 @@ export class TenantContextInterceptor implements NestInterceptor {
           });
         });
       }
-      return this.db.run(tenant, () => lastValueFrom(next.handle(), { defaultValue: undefined }));
+      const handle = () => lastValueFrom(next.handle(), { defaultValue: undefined });
+      return longRunning ? this.db.enter(tenant, handle) : this.db.run(tenant, handle);
     };
     return from(operation());
   }

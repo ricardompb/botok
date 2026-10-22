@@ -16,9 +16,7 @@ export const SEED_AGENTS = [
       "Revisar uma mensagem para a equipe",
       "Avaliar se este é o momento de falar"
     ],
-    "tip": "Você conduz a decisão. O BOTOK ajuda a explorar riscos, alternativas e abordagens.",
-    "response": "Antes de construir a fala, vale separar três pontos:\n\n1. OBJETIVO\nQual decisão ou entendimento você quer produzir ao final da conversa?\n\n2. RISCO\nO que pode ser interpretado de forma diferente da sua intenção? Considere o que já aconteceu e o que o público espera ouvir.\n\n3. EVIDÊNCIAS\nQuais fatos sustentam sua mensagem? Diferencie o que está confirmado do que ainda é uma hipótese.\n\nPara começar: quem receberá a mensagem e qual é o ponto mais delicado?",
-    "follow": "Uma estrutura possível para trabalhar a mensagem:\n\n“O ponto principal é [mensagem central]. Hoje, sabemos que [fato confirmado]. Isso significa [impacto para o público]. Nossa proposta é [próximo passo], com acompanhamento em [prazo].”\n\nAntes de utilizar, substitua os campos por informações verificadas. Podemos revisar a clareza, o tom e os riscos de interpretação.\n\nEste é um exemplo fixo da demonstração; não foi elaborado a partir dos dados digitados."
+    "tip": "Você conduz a decisão. O BOTOK ajuda a explorar riscos, alternativas e abordagens."
   },
   {
     "id": "crise",
@@ -35,9 +33,7 @@ export const SEED_AGENTS = [
       "Revisar uma nota à imprensa",
       "Organizar mensagens-chave"
     ],
-    "tip": "Em uma crise instalada, acione também a equipe IT’s OK e os responsáveis internos.",
-    "response": "Uma primeira manifestação deve ser construída com fatos verificados e responsabilidades claras.\n\n• O que está confirmado neste momento?\n• Quais medidas já foram efetivamente adotadas?\n• Quem está autorizado a falar?\n• Quando e por qual canal haverá nova atualização?\n\nEvite especular sobre causas, atribuir responsabilidades ainda não apuradas ou prometer prazos sem validação.\n\nQual é o público da manifestação e quais informações já podem ser confirmadas?",
-    "follow": "Estrutura ilustrativa para uma manifestação inicial:\n\n“Estamos acompanhando [situação confirmada]. Neste momento, [medida efetivamente adotada]. As informações ainda estão sendo verificadas pelas equipes responsáveis. Novas atualizações serão disponibilizadas por [canal], conforme houver fatos confirmados.”\n\nValide a mensagem com os responsáveis internos antes da divulgação. Em uma crise instalada, o assistente não substitui o acompanhamento especializado.\n\nTexto fixo de demonstração, sem análise da mensagem enviada."
+    "tip": "Em uma crise instalada, acione também a equipe IT’s OK e os responsáveis internos."
   },
   {
     "id": "midia",
@@ -54,9 +50,7 @@ export const SEED_AGENTS = [
       "Encontrar minha mensagem-chave",
       "Preparar uma entrevista"
     ],
-    "tip": "Uma boa preparação considera o que você quer dizer e o que o público precisa entender.",
-    "response": "Vamos preparar a entrevista a partir de três escolhas:\n\n1. MENSAGEM PRINCIPAL\nSe o público guardar apenas uma ideia, qual deverá ser?\n\n2. SUSTENTAÇÃO\nQual fato ou exemplo torna essa ideia concreta e verificável?\n\n3. PERGUNTA DIFÍCIL\nQual questão você gostaria de evitar, mas precisa estar preparado para responder?\n\nQual será o tema e em que contexto a entrevista acontecerá?",
-    "follow": "Exercício ilustrativo de preparação:\n\nResponda primeiro à pergunta, de modo direto. Em seguida, desenvolva a resposta com um fato confirmado e explique sua relevância para o público.\n\nSe não houver informação suficiente, diga com clareza o que ainda não pode confirmar e indique o encaminhamento adequado.\n\nEste texto é um exemplo fixo; o protótipo não avalia sua resposta."
+    "tip": "Uma boa preparação considera o que você quer dizer e o que o público precisa entender."
   },
   {
     "id": "toc",
@@ -73,9 +67,7 @@ export const SEED_AGENTS = [
       "Simplificar uma mensagem",
       "Conectar a ideia ao público"
     ],
-    "tip": "Objetividade e conexão podem caminhar juntas.",
-    "response": "Comece pelo efeito que deseja produzir. Depois, substitua afirmações genéricas por exemplos observáveis e explique o próximo passo esperado.\n\nQual mensagem você gostaria de trabalhar?",
-    "follow": "Estrutura ilustrativa: “Observei [fato]. Isso produziu [efeito]. Podemos combinar [próxima ação]?”\n\nAjuste a linguagem ao contexto e ao relacionamento. Texto fixo da demonstração."
+    "tip": "Objetividade e conexão podem caminhar juntas."
   },
   {
     "id": "redes",
@@ -92,9 +84,7 @@ export const SEED_AGENTS = [
       "Ajustar o tom de um texto",
       "Avaliar riscos de uma postagem"
     ],
-    "tip": "Considere as políticas da empresa e confirme as informações antes de publicar.",
-    "response": "Antes de redigir, precisamos definir o objetivo da publicação, o público e o que pode ser divulgado.\n\nQual ideia você pretende compartilhar e em qual contexto?",
-    "follow": "Uma estrutura possível: ideia principal, exemplo concreto, aprendizado e convite à reflexão.\n\nConfirme os fatos e as permissões de divulgação. Texto fixo para demonstrar a experiência."
+    "tip": "Considere as políticas da empresa e confirme as informações antes de publicar."
   }
 ];
 

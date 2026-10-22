@@ -125,7 +125,7 @@ export function ChatPage({ agent, agents }: Props) {
     setDraft('');
     const result = await send(value);
     if (!result.ok) {
-      setDraft(value);
+      if (result.restoreDraft) setDraft(value);
       toast(result.error);
     }
     inputRef.current?.focus();

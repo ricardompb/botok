@@ -10,10 +10,8 @@ export class GetCatalogHandler implements IQueryHandler<GetCatalogQuery> {
   constructor(private readonly repo: AgentsRepository) {}
 
   async execute({ companyId }: GetCatalogQuery): Promise<CatalogResponseDto> {
-    const [company, agents] = await Promise.all([
-      this.repo.findCompany(companyId),
-      this.repo.findAll(),
-    ]);
+    const company = await this.repo.findCompany(companyId);
+    const agents = await this.repo.findAll();
     if (!company) throw new NotFoundException('Empresa não encontrada.');
     const allowed = new Set(company.allowedAgents.map((a) => a.id));
     return {

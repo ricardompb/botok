@@ -39,14 +39,6 @@ export class Agent {
   @Column('text')
   tip: string;
 
-  /** Resposta ilustrativa do primeiro turno (o protótipo não executa IA). */
-  @Column('text')
-  response: string;
-
-  /** Resposta ilustrativa dos turnos seguintes. */
-  @Column('text')
-  follow: string;
-
   @Column({ length: 20 })
   scope: AgentScope;
 
@@ -60,9 +52,11 @@ export class Agent {
   @Column({ length: 60 })
   provider: string;
 
+  /** Endpoint do projeto Foundry: https://<recurso>.services.ai.azure.com/api/projects/<projeto> */
   @Column({ length: 500 })
   endpoint: string;
 
+  /** Agente no Foundry: `nome` ou `nome:versão` (sem versão, usa a mais recente). */
   @Column({ length: 160 })
   remoteId: string;
 

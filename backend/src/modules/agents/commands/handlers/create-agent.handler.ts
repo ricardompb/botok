@@ -7,10 +7,6 @@ import { AUDIT_AUTHOR, buildAgentFields } from './save-agent.js';
 const NEW_AGENT_DEFAULTS = {
   icon: 'chat',
   tip: 'Você conduz a decisão. Utilize apenas situações fictícias nesta demonstração.',
-  response:
-    'Este é um agente cadastrado pela administração.\n\nNa plataforma real, a mensagem seria enviada ao agente configurado. Aqui, esta resposta fixa apenas demonstra que o novo cadastro já pode aparecer no catálogo, sem alterar o código.\n\nQual situação de comunicação você pretende trabalhar?',
-  follow:
-    'Continuação ilustrativa do agente cadastrado. O protótipo não executa a conexão nem interpreta as mensagens.',
 };
 
 @CommandHandler(CreateAgentCommand)

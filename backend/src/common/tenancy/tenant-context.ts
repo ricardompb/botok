@@ -15,7 +15,8 @@ export type TenantContext =
 
 export interface TenantStore {
   context: TenantContext;
-  manager: EntityManager;
+  /** Ausente em rotas longas (streaming), até que uma transação curta seja aberta. */
+  manager?: EntityManager;
 }
 
 export const tenantStorage = new AsyncLocalStorage<TenantStore>();

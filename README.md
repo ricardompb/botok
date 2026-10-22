@@ -91,8 +91,10 @@ AUTH_LOCAL_ENABLED=true
 ENTRA_API_CLIENT_ID=
 ENTRA_API_SCOPE=access_as_user
 ENTRA_ADMIN_TENANT_ID=
+FOUNDRY_PROJECT_ENDPOINT=
 ```
 
+- `FOUNDRY_PROJECT_ENDPOINT`: projeto Foundry dos agentes criados pelo seed (ver [Conversa com os agentes](#conversa-com-os-agentes-microsoft-foundry)).
 - `DEFAULT_PASSWORD`: senha do login local (desenvolvimento) para os usuários do seed e os adicionados pela administração.
 - Variáveis `AUTH_*`/`ENTRA_*`: ver [Autenticação (Microsoft Entra ID)](#autenticação-microsoft-entra-id).
 - Com o banco vazio, o backend popula automaticamente o cenário do `BOTOK.html` (empresas, usuários, agentes e uso do mês).
@@ -306,6 +308,35 @@ Se a porta 5432 já estiver ocupada, use `POSTGRES_PORT=5433 docker compose up -
 | `/administracao/empresas/:companyId`  | Ambiente da empresa  | admin    |
 | `/administracao/agentes`              | Catálogo de agentes  | admin    |
 | `/sobre`                              | Sobre o projeto      | público  |
+
+## Conversa com os agentes (Microsoft Foundry)
+
+A conversa é feita com agentes do **Microsoft Foundry Agent Service** (agentes atuais, identificados por nome), via SDK `@azure/ai-projects` (Conversations + Responses), com a resposta transmitida em **streaming** (Server-Sent Events) até a tela.
+
+### Cadastro do agente (console de agentes)
+
+| Campo do console                          | Uso                                                                 |
+|-------------------------------------------|---------------------------------------------------------------------|
+| Endpoint HTTPS                            | Endpoint do projeto: `https://<recurso>.services.ai.azure.com/api/projects/<projeto>` |
+| Identificador do agente ou publicação     | Nome do agente no Foundry; `nome:versão` fixa uma versão (sem versão, usa a mais recente) |
+| Método de autenticação                    | **Microsoft Entra ID** (único suportado pelo Foundry). “Credencial em cofre” é recusada na ativação |
+
+Instruções, modelo e base de conhecimento continuam sendo mantidos no Foundry; o portal só referencia o agente.
+
+### Credencial do backend
+
+O backend usa `DefaultAzureCredential`: **identidade gerenciada** em produção e `az login` em desenvolvimento. A identidade precisa da função **Azure AI User** no projeto Foundry (IAM do recurso). Nenhuma chave é configurada no portal.
+
+### Sem histórico
+
+- O portal **não grava mensagens**: guarda só metadados da sessão (empresa, usuário, assistente, contagem, atividade) e os identificadores remotos necessários ao descarte.
+- O contexto vive na *conversation* do Foundry durante a sessão e é **apagado no Foundry** (conversa e respostas) ao encerrar, trocar de assistente, sair da tela ou fechar a página.
+- Sem aviso do navegador, um coletor no servidor descarta as conversas **sem atividade há 30 minutos** (verificação a cada minuto).
+- Conteúdo de conversa não é registrado em logs.
+
+### Fluxo
+
+`POST /chat/messages` (SSE: `session` → `delta`… → `done` | `error`) · `POST /chat/sessions/:id/end` (encerramento explícito). Se o Foundry estiver indisponível, o usuário recebe “O assistente não está disponível no momento”.
 
 ## Multi-tenancy (separação lógica dos dados)
 

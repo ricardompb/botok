@@ -8,10 +8,8 @@ export class ListCompaniesHandler implements IQueryHandler<ListCompaniesQuery> {
   constructor(private readonly repo: CompaniesRepository) {}
 
   async execute(): Promise<CompanyListItemDto[]> {
-    const [companies, active] = await Promise.all([
-      this.repo.findAll(),
-      this.repo.activeUsersByTenant(),
-    ]);
+    const companies = await this.repo.findAll();
+    const active = await this.repo.activeUsersByTenant();
     return companies.map((c) => ({
       id: c.id,
       name: c.name,

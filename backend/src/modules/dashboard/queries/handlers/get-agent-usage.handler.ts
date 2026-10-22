@@ -14,10 +14,8 @@ export class GetAgentUsageHandler implements IQueryHandler<GetAgentUsageQuery> {
   ) {}
 
   async execute(): Promise<AgentUsageDto[]> {
-    const [counts, agents] = await Promise.all([
-      this.sessions.countByAgentSince(startOfMonth()),
-      this.agents.findAll(),
-    ]);
+    const counts = await this.sessions.countByAgentSince(startOfMonth());
+    const agents = await this.agents.findAll();
     return agents
       .filter((a) => counts.has(a.id))
       .map((a) => ({ agentId: a.id, name: a.name, sessions: counts.get(a.id)! }))

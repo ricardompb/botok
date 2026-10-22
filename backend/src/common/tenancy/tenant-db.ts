@@ -11,6 +11,10 @@ import { tenantStorage, type TenantContext } from './tenant-context.js';
 export class TenantDb {
   constructor(private readonly dataSource: DataSource) {}
 
+  /**
+   * Abre uma transação no contexto informado. Todas as consultas usam a mesma
+   * conexão: execute-as em sequência (sem Promise.all).
+   */
   run<T>(context: TenantContext, fn: () => Promise<T>): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       const tenantId = context.kind === 'tenant' ? String(context.tenantId) : '';
@@ -23,12 +27,27 @@ export class TenantDb {
     });
   }
 
+  /**
+   * Define o contexto sem abrir transação — para operações longas, que
+   * acessam o banco apenas em transações curtas via `transaction()`.
+   */
+  enter<T>(context: TenantContext, fn: () => Promise<T>): Promise<T> {
+    return tenantStorage.run({ context }, fn);
+  }
+
+  /** Transação curta no contexto atual. */
+  transaction<T>(fn: () => Promise<T>): Promise<T> {
+    return this.run(this.context, fn);
+  }
+
   get context(): TenantContext {
     return this.store().context;
   }
 
   repo<T extends ObjectLiteral>(entity: EntityTarget<T>): Repository<T> {
-    return this.store().manager.getRepository(entity);
+    const { manager } = this.store();
+    if (!manager) throw new Error('Acesso ao banco fora de uma transação (use TenantDb.transaction).');
+    return manager.getRepository(entity);
   }
 
   /** Tenant do contexto atual, ou null em contexto de plataforma/sistema. */

@@ -12,10 +12,15 @@ http.interceptors.request.use(async (config) => {
   return config;
 });
 
-http.interceptors.response.use(undefined, (error) => {
-  if (error.response?.status === 401 && sessionKey()) {
+/** Sessão expirada ou inválida: volta para a entrada. */
+export function handleUnauthorized(status: number | undefined) {
+  if (status === 401 && sessionKey()) {
     tokenStorage.clear();
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   }
+}
+
+http.interceptors.response.use(undefined, (error) => {
+  handleUnauthorized(error.response?.status);
   return Promise.reject(error);
 });

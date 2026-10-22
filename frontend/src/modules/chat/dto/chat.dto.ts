@@ -4,12 +4,9 @@ export interface SendMessageDto {
   message: string;
 }
 
-export interface SendMessageResponseDto {
-  sessionId: string;
-  reply: string;
-}
-
 export interface ChatMessage {
   role: 'user' | 'bot';
   text: string;
+  /** Resposta ainda sendo transmitida pelo assistente. */
+  pending?: boolean;
 }

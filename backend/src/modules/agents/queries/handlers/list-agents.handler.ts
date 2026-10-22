@@ -8,10 +8,8 @@ export class ListAgentsHandler implements IQueryHandler<ListAgentsQuery> {
   constructor(private readonly repo: AgentsRepository) {}
 
   async execute(): Promise<AgentAdminDto[]> {
-    const [agents, companies] = await Promise.all([
-      this.repo.findAll(),
-      this.repo.findCompanies(),
-    ]);
+    const agents = await this.repo.findAll();
+    const companies = await this.repo.findCompanies();
     return agents.map((a) => ({
       id: a.id,
       internalName: a.internalName,
