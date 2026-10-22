@@ -2,7 +2,7 @@ import type { User } from '../../users/entities/user.entity.js';
 import type { EntraClaims } from './entra-claims.js';
 
 export const NOT_REGISTERED =
-  'Conta Microsoft não cadastrada no BOTOK. Procure a administração da sua empresa.';
+  'Conta Microsoft não cadastrada na IT’s OK. Procure a administração da sua empresa.';
 
 /**
  * Decide se a identidade do Entra pode ser vinculada ao usuário do portal.

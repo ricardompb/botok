@@ -61,7 +61,7 @@ describe('FoundryGateway', () => {
     await withGateway(['Olá, ', 'Ana.'], false, async (gateway, endpoint, requests) => {
       const conversationId = await gateway.createConversation(endpoint);
       const events = [];
-      for await (const e of gateway.reply(endpoint, parseAgentReference('botok-rota:3'), conversationId, 'Preciso falar com o board.')) {
+      for await (const e of gateway.reply(endpoint, parseAgentReference('itsok-rota:3'), conversationId, 'Preciso falar com o board.')) {
         events.push(e);
       }
       await gateway.discard(endpoint, conversationId, ['resp_1']);
@@ -82,7 +82,7 @@ describe('FoundryGateway', () => {
         conversation: 'conv_1',
         input: 'Preciso falar com o board.',
         stream: true,
-        agent: { type: 'agent_reference', name: 'botok-rota', version: '3' },
+        agent: { type: 'agent_reference', name: 'itsok-rota', version: '3' },
       });
     });
   });
@@ -97,7 +97,7 @@ describe('FoundryGateway', () => {
   });
 
   it('interpreta nome e versão do agente', () => {
-    expect(parseAgentReference('botok-rota')).toEqual({ name: 'botok-rota' });
-    expect(parseAgentReference(' botok-rota:2 ')).toEqual({ name: 'botok-rota', version: '2' });
+    expect(parseAgentReference('itsok-rota')).toEqual({ name: 'itsok-rota' });
+    expect(parseAgentReference(' itsok-rota:2 ')).toEqual({ name: 'itsok-rota', version: '2' });
   });
 });

@@ -12,9 +12,9 @@ import { SeedService } from './seed.service.js';
         host: config.get('DB_HOST', 'localhost'),
         port: Number(config.get('DB_PORT', 5432)),
         // Usuário sem SUPERUSER/BYPASSRLS: o Row-Level Security vale para o backend.
-        username: config.get('DB_USER', 'botok_app'),
-        password: config.get('DB_PASSWORD', 'botok_app'),
-        database: config.get('DB_NAME', 'botok'),
+        username: config.get('DB_USER', 'itsok_app'),
+        password: config.get('DB_PASSWORD', 'itsok_app'),
+        database: config.get('DB_NAME', 'itsok'),
         autoLoadEntities: true,
         synchronize: true,
       }),

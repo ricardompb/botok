@@ -31,7 +31,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       throw new ConflictException('Não há vaga disponível.');
     }
 
-    const passwordHash = await bcrypt.hash(this.config.get('DEFAULT_PASSWORD', 'botok123'), 10);
+    const passwordHash = await bcrypt.hash(this.config.get('DEFAULT_PASSWORD', 'itsok123'), 10);
     try {
       const user = await this.repo.create({
         name,

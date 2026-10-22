@@ -1,6 +1,6 @@
-const KEY = 'botok.token';
+const KEY = 'itsok.token';
 
-export const UNAUTHORIZED_EVENT = 'botok:unauthorized';
+export const UNAUTHORIZED_EVENT = 'itsok:unauthorized';
 
 export const tokenStorage = {
   get: () => localStorage.getItem(KEY),

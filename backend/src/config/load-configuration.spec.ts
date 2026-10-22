@@ -19,9 +19,9 @@ const vault = (secrets: Record<string, string>, fail?: string): SecretReader & {
 
 const PROD_SECRETS = {
   'DB-HOST': 'db.interno',
-  'DB-USER': 'botok_app',
+  'DB-USER': 'itsok_app',
   'DB-PASSWORD': 'senha-do-cofre',
-  'DB-NAME': 'botok',
+  'DB-NAME': 'itsok',
   'JWT-SECRET': 'jwt-do-cofre',
   'ENTRA-API-CLIENT-ID': 'api-id',
   'ENTRA-ADMIN-TENANT-ID': 'tenant-itsok',
@@ -30,7 +30,7 @@ const PROD_SECRETS = {
 describe('configuração via Azure Key Vault', () => {
   const cwd = process.cwd();
   beforeEach(() => {
-    const dir = mkdtempSync(join(tmpdir(), 'botok-cfg-'));
+    const dir = mkdtempSync(join(tmpdir(), 'itsok-cfg-'));
     writeFileSync(join(dir, '.env'), 'DB_PASSWORD=senha-do-env\nPORT=3000\n');
     process.chdir(dir);
   });
@@ -55,7 +55,7 @@ describe('configuração via Azure Key Vault', () => {
 
   it('com cofre: os valores do Key Vault prevalecem sobre o .env', async () => {
     const reader = vault({ 'DB-PASSWORD': 'senha-do-cofre' });
-    const env: NodeJS.ProcessEnv = { AZURE_KEY_VAULT_URL: 'https://botok.vault.azure.net' };
+    const env: NodeJS.ProcessEnv = { AZURE_KEY_VAULT_URL: 'https://itsok.vault.azure.net' };
     await loadConfiguration(env, () => reader);
     expect(env.DB_PASSWORD).toBe('senha-do-cofre');
     expect(reader.asked).not.toContain('AZURE-KEY-VAULT-URL');
@@ -64,13 +64,13 @@ describe('configuração via Azure Key Vault', () => {
   it('produção: exige o cofre, ignora o .env e valida as obrigatórias', async () => {
     await expect(loadConfiguration({ NODE_ENV: 'production' })).rejects.toThrow('AZURE_KEY_VAULT_URL é obrigatório');
 
-    const incomplete: NodeJS.ProcessEnv = { NODE_ENV: 'production', AZURE_KEY_VAULT_URL: 'https://botok.vault.azure.net' };
+    const incomplete: NodeJS.ProcessEnv = { NODE_ENV: 'production', AZURE_KEY_VAULT_URL: 'https://itsok.vault.azure.net' };
     await expect(loadConfiguration(incomplete, () => vault({ 'DB-HOST': 'h' }))).rejects.toThrow(
       'Configuração ausente no Key Vault: DB_USER, DB_PASSWORD',
     );
     expect(incomplete.DB_PASSWORD).toBeUndefined();
 
-    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', AZURE_KEY_VAULT_URL: 'https://botok.vault.azure.net' };
+    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', AZURE_KEY_VAULT_URL: 'https://itsok.vault.azure.net' };
     await loadConfiguration(env, () => vault(PROD_SECRETS));
     expect(env).toMatchObject({ DB_PASSWORD: 'senha-do-cofre', JWT_SECRET: 'jwt-do-cofre' });
     expect(env.PORT).toBeUndefined();

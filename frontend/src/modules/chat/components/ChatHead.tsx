@@ -14,7 +14,7 @@ export function ChatHead({ name, focused, onManual, onToggleFocus, onEnd }: Prop
     <div className="chat-head">
       <div>
         <h2 id="chat-name">{name}</h2>
-        <div className="muted">BOTOK · Apoio à comunicação</div>
+        <div className="muted">IT’s OK · Apoio à comunicação</div>
       </div>
       <div className="row">
         <button className="button secondary small" data-manual onClick={onManual}>

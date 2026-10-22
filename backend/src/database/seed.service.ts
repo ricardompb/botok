@@ -45,12 +45,12 @@ export class SeedService implements OnApplicationBootstrap {
     const users = this.db.repo(User);
     const sessions = this.db.repo(ChatSession);
 
-    const passwordHash = await bcrypt.hash(this.config.get('DEFAULT_PASSWORD', 'botok123'), 10);
+    const passwordHash = await bcrypt.hash(this.config.get('DEFAULT_PASSWORD', 'itsok123'), 10);
     // Projeto Foundry inicial dos agentes; o nome de cada agente é ajustado no console.
     const endpoint = this.config.get('FOUNDRY_PROJECT_ENDPOINT') || SEED_AGENT_REGISTRY.endpoint;
     const agents = await agentsRepo.save(
       SEED_AGENTS.map((a) =>
-        agentsRepo.create({ ...a, ...SEED_AGENT_REGISTRY, endpoint, tenantId: null, remoteId: `botok-${a.id}` }),
+        agentsRepo.create({ ...a, ...SEED_AGENT_REGISTRY, endpoint, tenantId: null, remoteId: `itsok-${a.id}` }),
       ),
     );
 

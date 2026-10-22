@@ -36,7 +36,7 @@ export function CatalogPage() {
     <section id="view-catalog" className="view">
       <div className="page">
         <div className="row between" style={{ marginBottom: 23 }}>
-          <span className="eyebrow">Seu espaço BOTOK</span>
+          <span className="eyebrow">Seu espaço IT’s OK</span>
           <span className="pill">
             <span className="dot" /> Acesso ativo
           </span>

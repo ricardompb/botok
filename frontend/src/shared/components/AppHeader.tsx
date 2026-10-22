@@ -21,7 +21,7 @@ export function AppHeader({ chatAgentId }: Props) {
     <header className="app-header" id="header">
       <button className="brand" data-page="catalog" aria-label="IT’s OK — início" onClick={() => navigate(homePath(user?.role))}>
         <img src={logo} alt="IT’s OK" />
-        <span className="brand-word">BOTOK</span>
+        <span className="brand-word">IT’s OK</span>
       </button>
       <div className="row">
         <button className="button ghost small" data-support onClick={() => openSupport({ contextAgentId: chatAgentId })}>

@@ -1,4 +1,4 @@
-# Botok – Documentação de Arquitetura
+# IT’s OK – Documentação de Arquitetura
 
 Aplicação web com **React** (frontend), **NestJS** (backend) e **PostgreSQL** (banco de dados).
 
@@ -96,14 +96,14 @@ cd backend && npm run keyvault:push -- <nome-do-cofre> .env.producao
 ```
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=botok_app
-DB_PASSWORD=botok_app
-DB_NAME=botok
+DB_USER=itsok_app
+DB_PASSWORD=itsok_app
+DB_NAME=itsok
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=troque-este-segredo-em-producao
 JWT_EXPIRES_IN=8h
-DEFAULT_PASSWORD=botok123
+DEFAULT_PASSWORD=itsok123
 AUTH_LOCAL_ENABLED=true
 ENTRA_API_CLIENT_ID=
 ENTRA_API_SCOPE=access_as_user
@@ -289,7 +289,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: botok
+      POSTGRES_DB: itsok
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -312,8 +312,8 @@ Se a porta 5432 já estiver ocupada, use `POSTGRES_PORT=5433 docker compose up -
 
 | Perfil        | E-mail                  | Senha      | Área                                   |
 |---------------|-------------------------|------------|----------------------------------------|
-| Assistentes   | `ana@horizonte.example` | `botok123` | Assistentes (Construtora Horizonte)    |
-| Administração | `equipe@itsok.example`  | `botok123` | Empresas, licenças e console de agentes |
+| Assistentes   | `ana@horizonte.example` | `itsok123` | Assistentes (Construtora Horizonte)    |
+| Administração | `equipe@itsok.example`  | `itsok123` | Empresas, licenças e console de agentes |
 
 ### Rotas do frontend
 
@@ -370,7 +370,7 @@ O backend usa `DefaultAzureCredential`: **identidade gerenciada** em produção 
 Cada **empresa cliente é um tenant** (`companies.id`). A IT’s OK opera a plataforma acima dos tenants. O isolamento tem duas barreiras:
 
 1. **Aplicação** — todo acesso ao banco passa pelo `TenantDb` (`backend/src/common/tenancy`), dentro de um contexto aberto por requisição pelo `TenantContextInterceptor`. Fora de um contexto, nenhuma consulta é executada. Os repositórios filtram pelo tenant do contexto e recusam pedidos explícitos de outro tenant.
-2. **Banco (Row-Level Security)** — cada operação roda em uma transação com `app.tenant_id` / `app.bypass_rls`, e as políticas do PostgreSQL (`rls.ts`, aplicadas na inicialização) só devolvem e só aceitam linhas do tenant atual. O backend conecta como `botok_app`, sem `SUPERUSER`/`BYPASSRLS`, e as tabelas usam `FORCE ROW LEVEL SECURITY`.
+2. **Banco (Row-Level Security)** — cada operação roda em uma transação com `app.tenant_id` / `app.bypass_rls`, e as políticas do PostgreSQL (`rls.ts`, aplicadas na inicialização) só devolvem e só aceitam linhas do tenant atual. O backend conecta como `itsok_app`, sem `SUPERUSER`/`BYPASSRLS`, e as tabelas usam `FORCE ROW LEVEL SECURITY`.
 
 | Contexto   | Quando                                                         | Dados visíveis                         |
 |------------|----------------------------------------------------------------|----------------------------------------|
@@ -392,10 +392,10 @@ Cada **empresa cliente é um tenant** (`companies.id`). A IT’s OK opera a plat
 
 Os e-mails são únicos na plataforma (necessário para o login e o vínculo com o Entra).
 
-O usuário `botok_app` é criado por `docker/postgres/init/01-app-role.sql` na primeira inicialização do volume. Em um volume já existente, execute uma vez:
+O usuário `itsok_app` é criado por `docker/postgres/init/01-app-role.sql` na primeira inicialização do volume. Em um volume já existente, execute uma vez:
 
 ```bash
-docker compose exec -T postgres psql -U postgres -d botok < docker/postgres/init/01-app-role.sql
+docker compose exec -T postgres psql -U postgres -d itsok < docker/postgres/init/01-app-role.sql
 ```
 
 ## Autenticação (Microsoft Entra ID)
@@ -413,8 +413,8 @@ O login é feito no **Microsoft Entra ID**, em modo **multi-tenant**: cada usuá
 
 ### App registrations (no tenant da IT’s OK)
 
-1. **botok-api**: tipos de conta *“Contas em qualquer diretório organizacional (multilocatário)”*; em *Expor uma API*, URI `api://<client-id-da-api>` e escopo `access_as_user`; no manifesto, `requestedAccessTokenVersion: 2`.
-2. **botok-web**: multilocatário; plataforma **SPA** com URIs de redirecionamento `http://localhost:5173/` (e a URL de produção, com `/` no final); em *Permissões de API*, adicionar `botok-api / access_as_user` (delegada).
+1. **itsok-api**: tipos de conta *“Contas em qualquer diretório organizacional (multilocatário)”*; em *Expor uma API*, URI `api://<client-id-da-api>` e escopo `access_as_user`; no manifesto, `requestedAccessTokenVersion: 2`.
+2. **itsok-web**: multilocatário; plataforma **SPA** com URIs de redirecionamento `http://localhost:5173/` (e a URL de produção, com `/` no final); em *Permissões de API*, adicionar `itsok-api / access_as_user` (delegada).
 
 Nos tenants dos clientes, o consentimento ao app pode exigir aprovação de um administrador da empresa cliente.
 
@@ -422,11 +422,11 @@ Nos tenants dos clientes, o consentimento ao app pode exigir aprovação de um a
 
 | Onde     | Variável                | Valor                                               |
 |----------|-------------------------|-----------------------------------------------------|
-| backend  | `ENTRA_API_CLIENT_ID`   | Client ID do **botok-api**                          |
+| backend  | `ENTRA_API_CLIENT_ID`   | Client ID do **itsok-api**                          |
 | backend  | `ENTRA_API_SCOPE`       | `access_as_user`                                    |
 | backend  | `ENTRA_ADMIN_TENANT_ID` | Tenant ID da IT’s OK                                |
 | backend  | `AUTH_LOCAL_ENABLED`    | `false` em produção (o backend recusa `true` com `NODE_ENV=production`) |
-| frontend | `VITE_ENTRA_CLIENT_ID`  | Client ID do **botok-web**                          |
+| frontend | `VITE_ENTRA_CLIENT_ID`  | Client ID do **itsok-web**                          |
 | frontend | `VITE_ENTRA_API_SCOPE`  | `api://<client-id-da-api>/access_as_user`           |
 | frontend | `VITE_ENTRA_AUTHORITY`  | `https://login.microsoftonline.com/organizations`   |
 

@@ -7,22 +7,22 @@
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "BOTOK FRONT",
+      "name": "IT’s OK FRONT",
       "command": "yarn run dev",
       "cwd": "${workspaceFolder}/frontend"
     },
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "BOTOK BACK DEBUG",
+      "name": "IT’s OK BACK DEBUG",
       "command": "yarn run start:debug",
       "cwd": "${workspaceFolder}/backend"
     }
   ],
   "compounds": [
     {
-      "name": "BOTOK",
-      "configurations": ["BOTOK FRONT", "BOTOK BACK DEBUG"]
+      "name": "IT’s OK",
+      "configurations": ["IT’s OK FRONT", "IT’s OK BACK DEBUG"]
     }
   ]
 }
