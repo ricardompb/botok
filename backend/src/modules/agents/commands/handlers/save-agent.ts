@@ -13,11 +13,11 @@ export async function buildAgentFields(
   existing: Agent | null,
 ): Promise<Partial<Agent>> {
   const internalName = dto.internalName.trim();
-  const clientId = dto.scope === 'exclusive' ? (dto.clientId ?? null) : null;
+  const tenantId = dto.scope === 'exclusive' ? (dto.clientId ?? null) : null;
   const error = validateAgent(dto, {
     existing,
     duplicateName: await repo.internalNameTaken(internalName, existing?.id),
-    clientExists: clientId !== null && !!(await repo.findCompany(clientId)),
+    clientExists: tenantId !== null && !!(await repo.findCompany(tenantId)),
   });
   if (error) throw new BadRequestException(error);
 
@@ -30,7 +30,7 @@ export async function buildAgentFields(
     short: dto.short.trim(),
     description,
     scope: dto.scope,
-    clientId,
+    tenantId,
     status: dto.status,
     provider: 'Microsoft Foundry',
     endpoint: dto.endpoint.trim(),

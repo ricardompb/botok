@@ -5,5 +5,6 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
-  companyId: number | null;
+  /** Empresa (tenant) do usuário; null para a administração IT’s OK. */
+  tenantId: number | null;
 }

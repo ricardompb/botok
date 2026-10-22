@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { tokenStorage } from '../../../shared/api/token-storage';
+import { sessionKey } from '../../../shared/auth/access-token';
 import type { CatalogResponseDto } from '../dto/catalog.dto';
 import { catalogService } from '../services/catalog.service';
 
 // Último catálogo carregado, por sessão, para exibição imediata ao trocar de tela.
 let cache: { token: string | null; data: CatalogResponseDto } | null = null;
-const cached = () => (cache && cache.token === tokenStorage.get() ? cache.data : null);
+const cached = () => (cache && cache.token === sessionKey() ? cache.data : null);
 
 /** Assistentes liberados para o usuário e demais especialidades. */
 export function useCatalog(enabled = true) {
@@ -15,7 +15,7 @@ export function useCatalog(enabled = true) {
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    const token = tokenStorage.get();
+    const token = sessionKey();
     catalogService
       .get()
       .then((data) => {

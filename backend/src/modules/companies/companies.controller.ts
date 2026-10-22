@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Roles } from '../../common/auth/roles.decorator.js';
+import { TenantParam } from '../../common/tenancy/tenant-param.decorator.js';
 import { CreateCompanyCommand } from './commands/impl/create-company.command.js';
 import { UpdateEntitlementsCommand } from './commands/impl/update-entitlements.command.js';
 import { CreateCompanyDto } from './dto/create-company.dto.js';
@@ -22,6 +23,7 @@ export class CompaniesController {
   }
 
   @Get(':id')
+  @TenantParam('id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.queryBus.execute(new GetCompanyQuery(id));
   }
@@ -32,6 +34,7 @@ export class CompaniesController {
   }
 
   @Put(':id/entitlements')
+  @TenantParam('id')
   updateEntitlements(
     @Param('id', ParseIntPipe) id: number,
     @Body() { agentIds }: UpdateEntitlementsDto,

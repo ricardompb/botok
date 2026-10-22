@@ -12,6 +12,6 @@ export class CatalogController {
 
   @Get()
   get(@CurrentUser() user: AuthUser) {
-    return this.queryBus.execute(new GetCatalogQuery(user.companyId!));
+    return this.queryBus.execute(new GetCatalogQuery(user.tenantId!));
   }
 }

@@ -79,17 +79,22 @@ npm i @nestjs/cqrs @nestjs/typeorm typeorm pg @nestjs/config class-validator cla
 ```
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
+DB_USER=botok_app
+DB_PASSWORD=botok_app
 DB_NAME=botok
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=troque-este-segredo-em-producao
 JWT_EXPIRES_IN=8h
 DEFAULT_PASSWORD=botok123
+AUTH_LOCAL_ENABLED=true
+ENTRA_API_CLIENT_ID=
+ENTRA_API_SCOPE=access_as_user
+ENTRA_ADMIN_TENANT_ID=
 ```
 
-- `DEFAULT_PASSWORD`: senha dos usuários criados pelo seed e dos usuários adicionados pela administração.
+- `DEFAULT_PASSWORD`: senha do login local (desenvolvimento) para os usuários do seed e os adicionados pela administração.
+- Variáveis `AUTH_*`/`ENTRA_*`: ver [Autenticação (Microsoft Entra ID)](#autenticação-microsoft-entra-id).
 - Com o banco vazio, o backend popula automaticamente o cenário do `BOTOK.html` (empresas, usuários, agentes e uso do mês).
 
 ### Exemplos
@@ -211,6 +216,9 @@ npm i axios react-router-dom
 
 ```
 VITE_API_URL=http://localhost:3000
+VITE_ENTRA_CLIENT_ID=
+VITE_ENTRA_API_SCOPE=
+VITE_ENTRA_AUTHORITY=https://login.microsoftonline.com/organizations
 ```
 
 ### Exemplos
@@ -280,7 +288,7 @@ cd frontend && npm run dev
 
 Se a porta 5432 já estiver ocupada, use `POSTGRES_PORT=5433 docker compose up -d` e ajuste `DB_PORT` no `backend/.env`.
 
-### Acesso de demonstração
+### Acesso de demonstração (login local, só desenvolvimento)
 
 | Perfil        | E-mail                  | Senha      | Área                                   |
 |---------------|-------------------------|------------|----------------------------------------|
@@ -298,6 +306,73 @@ Se a porta 5432 já estiver ocupada, use `POSTGRES_PORT=5433 docker compose up -
 | `/administracao/empresas/:companyId`  | Ambiente da empresa  | admin    |
 | `/administracao/agentes`              | Catálogo de agentes  | admin    |
 | `/sobre`                              | Sobre o projeto      | público  |
+
+## Multi-tenancy (separação lógica dos dados)
+
+Cada **empresa cliente é um tenant** (`companies.id`). A IT’s OK opera a plataforma acima dos tenants. O isolamento tem duas barreiras:
+
+1. **Aplicação** — todo acesso ao banco passa pelo `TenantDb` (`backend/src/common/tenancy`), dentro de um contexto aberto por requisição pelo `TenantContextInterceptor`. Fora de um contexto, nenhuma consulta é executada. Os repositórios filtram pelo tenant do contexto e recusam pedidos explícitos de outro tenant.
+2. **Banco (Row-Level Security)** — cada operação roda em uma transação com `app.tenant_id` / `app.bypass_rls`, e as políticas do PostgreSQL (`rls.ts`, aplicadas na inicialização) só devolvem e só aceitam linhas do tenant atual. O backend conecta como `botok_app`, sem `SUPERUSER`/`BYPASSRLS`, e as tabelas usam `FORCE ROW LEVEL SECURITY`.
+
+| Contexto   | Quando                                                         | Dados visíveis                         |
+|------------|----------------------------------------------------------------|----------------------------------------|
+| `tenant`   | Usuário de empresa (sempre o próprio tenant)                   | Somente a empresa                      |
+| `tenant`   | Admin IT’s OK em rota de empresa (`/companies/:companyId/...`) | Somente a empresa da rota — **auditado** |
+| `platform` | Admin IT’s OK em visões gerais (empresas, catálogo, consumo)   | Todos os tenants                       |
+| `system`   | Sem usuário: login, vínculo do Entra, Fale conosco anônimo, seed | Todos (operações internas)           |
+
+| Tabela              | Tenant                     | Regra                                                         |
+|---------------------|----------------------------|---------------------------------------------------------------|
+| `companies`         | `id`                       | A empresa só vê a si mesma                                    |
+| `users`             | `tenantId`                 | `null` para administradores IT’s OK                           |
+| `company_agents`    | `tenantId`                 | Permissões de agentes da empresa                              |
+| `chat_sessions`     | `tenantId`                 | Metadados de consumo (sem conteúdo)                           |
+| `support_requests`  | `tenantId`                 | `null` para administração ou pedidos antes do login           |
+| `tenant_access_log` | `tenantId`                 | Cada operação da IT’s OK nos dados de uma empresa, inclusive tentativas negadas |
+| `agents`            | `tenantId` (opcional)      | Catálogo global: genéricos (`null`) visíveis a todos; exclusivos só à empresa; alterações só pela plataforma |
+| `agent_audit`       | —                          | Somente plataforma                                            |
+
+Os e-mails são únicos na plataforma (necessário para o login e o vínculo com o Entra).
+
+O usuário `botok_app` é criado por `docker/postgres/init/01-app-role.sql` na primeira inicialização do volume. Em um volume já existente, execute uma vez:
+
+```bash
+docker compose exec -T postgres psql -U postgres -d botok < docker/postgres/init/01-app-role.sql
+```
+
+## Autenticação (Microsoft Entra ID)
+
+O login é feito no **Microsoft Entra ID**, em modo **multi-tenant**: cada usuário entra com a conta Microsoft corporativa da própria empresa. O Entra apenas autentica; **perfil (administrador ou usuário), empresa, suspensão e vagas continuam no banco do portal**.
+
+### Regras de acesso
+
+- Só entra quem a administração cadastrou no portal. No primeiro acesso, a conta Microsoft (`tid` + `oid`) é vinculada ao usuário pelo e-mail (UPN).
+- O primeiro acesso de um usuário fixa o tenant da empresa; depois disso, contas de outros tenants são recusadas para aquela empresa.
+- Contas convidadas (B2B) e contas pessoais da Microsoft não são aceitas.
+- Administradores só são aceitos quando vêm do tenant da IT’s OK (`ENTRA_ADMIN_TENANT_ID`).
+- A verificação adicional (MFA) é feita pelo Entra, via Acesso Condicional em cada tenant.
+- O backend valida cada access token: assinatura (JWKS da Microsoft), audience, emissor do tenant, expiração e escopo `access_as_user`; suspensão e vigência do contrato são revalidadas a cada requisição.
+
+### App registrations (no tenant da IT’s OK)
+
+1. **botok-api**: tipos de conta *“Contas em qualquer diretório organizacional (multilocatário)”*; em *Expor uma API*, URI `api://<client-id-da-api>` e escopo `access_as_user`; no manifesto, `requestedAccessTokenVersion: 2`.
+2. **botok-web**: multilocatário; plataforma **SPA** com URIs de redirecionamento `http://localhost:5173/` (e a URL de produção, com `/` no final); em *Permissões de API*, adicionar `botok-api / access_as_user` (delegada).
+
+Nos tenants dos clientes, o consentimento ao app pode exigir aprovação de um administrador da empresa cliente.
+
+### Configuração
+
+| Onde     | Variável                | Valor                                               |
+|----------|-------------------------|-----------------------------------------------------|
+| backend  | `ENTRA_API_CLIENT_ID`   | Client ID do **botok-api**                          |
+| backend  | `ENTRA_API_SCOPE`       | `access_as_user`                                    |
+| backend  | `ENTRA_ADMIN_TENANT_ID` | Tenant ID da IT’s OK                                |
+| backend  | `AUTH_LOCAL_ENABLED`    | `false` em produção (o backend recusa `true` com `NODE_ENV=production`) |
+| frontend | `VITE_ENTRA_CLIENT_ID`  | Client ID do **botok-web**                          |
+| frontend | `VITE_ENTRA_API_SCOPE`  | `api://<client-id-da-api>/access_as_user`           |
+| frontend | `VITE_ENTRA_AUTHORITY`  | `https://login.microsoftonline.com/organizations`   |
+
+Com `VITE_ENTRA_CLIENT_ID` vazio, o frontend usa o login local por e-mail/senha (desenvolvimento). Com o Entra configurado, a tela de entrada mostra apenas o e-mail profissional (enviado à Microsoft como sugestão de conta) e o botão **Entrar com Microsoft**; senha e recuperação de acesso ficam no Entra.
 
 ## Convenções
 

@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,12 +11,16 @@ import { JwtService } from '@nestjs/jwt';
 import type { AuthUser, UserRole } from '../../../common/auth/auth-user.js';
 import { IS_PUBLIC_KEY } from '../../../common/auth/public.decorator.js';
 import { ROLES_KEY } from '../../../common/auth/roles.decorator.js';
+import { TenantDb } from '../../../common/tenancy/tenant-db.js';
+import type { User } from '../../users/entities/user.entity.js';
 import { UsersRepository } from '../../users/repositories/users.repository.js';
 import { accessDenial } from '../account-policy.js';
+import { AUTH_OPTIONS, type AuthOptions } from '../auth-options.js';
 
 /**
- * Guard global: autentica pelo token Bearer, revalida a conta a cada
- * requisição (suspensão e vigência) e aplica o perfil exigido por @Roles.
+ * Guard global: autentica pelo token Bearer — access token do Microsoft
+ * Entra ID ou, só em desenvolvimento, o token do login local —, revalida a
+ * conta a cada requisição (suspensão e vigência) e aplica o perfil de @Roles.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -23,6 +28,8 @@ export class JwtAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly jwt: JwtService,
     private readonly users: UsersRepository,
+    private readonly db: TenantDb,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
   ) {}
 
   async canActivate(context: ExecutionContext) {
@@ -30,7 +37,8 @@ export class JwtAuthGuard implements CanActivate {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, targets);
     const request = context.switchToHttp().getRequest();
 
-    const user = await this.resolveUser(request.headers.authorization);
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    const user = type === 'Bearer' && token ? await this.resolveUser(token, request) : null;
     if (user) request.user = user;
     if (isPublic) return true;
     if (!user) throw new UnauthorizedException('Sessão expirada. Entre novamente.');
@@ -42,16 +50,29 @@ export class JwtAuthGuard implements CanActivate {
     return true;
   }
 
-  private async resolveUser(header?: string): Promise<AuthUser | null> {
-    const [type, token] = header?.split(' ') ?? [];
-    if (type !== 'Bearer' || !token) return null;
-    let sub: string;
-    try {
-      ({ sub } = await this.jwt.verifyAsync<{ sub: string }>(token));
-    } catch {
-      return null;
+  private async resolveUser(token: string, request: { entraClaims?: unknown }) {
+    if (this.options.localEnabled) {
+      const sub = await this.jwt
+        .verifyAsync<{ sub: string }>(token)
+        .then((p) => p.sub)
+        .catch(() => null);
+      if (sub) return this.toAuthUser(await this.lookup(() => this.users.findById(sub)));
     }
-    const user = await this.users.findById(sub);
+    const claims = await this.options.entra?.verify(token);
+    if (!claims) return null;
+    // Disponível para POST /auth/entra/session, que faz o vínculo no primeiro acesso.
+    request.entraClaims = claims;
+    return this.toAuthUser(
+      await this.lookup(() => this.users.findByEntraIdentity(claims.tenantId, claims.objectId)),
+    );
+  }
+
+  /** Identificar o usuário precede o tenant: busca em contexto de sistema. */
+  private lookup(fn: () => Promise<User | null>) {
+    return this.db.run({ kind: 'system' }, fn);
+  }
+
+  private toAuthUser(user: User | null): AuthUser | null {
     if (!user) return null;
     const denial = accessDenial(user);
     if (denial) throw new ForbiddenException(denial);
@@ -60,7 +81,7 @@ export class JwtAuthGuard implements CanActivate {
       name: user.name,
       email: user.email,
       role: user.role,
-      companyId: user.companyId,
+      tenantId: user.tenantId,
     };
   }
 }

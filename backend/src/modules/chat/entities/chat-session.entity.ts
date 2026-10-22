@@ -13,7 +13,7 @@ export class ChatSession {
   agentId: string;
 
   @Column('int')
-  companyId: number;
+  tenantId: number;
 
   @Column('uuid')
   userId: string;
@@ -21,6 +21,6 @@ export class ChatSession {
   @Column('int', { default: 0 })
   messageCount: number;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'clock_timestamp()' })
   startedAt: Date;
 }

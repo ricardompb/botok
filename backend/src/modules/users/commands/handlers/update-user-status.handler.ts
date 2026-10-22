@@ -10,9 +10,9 @@ export class UpdateUserStatusHandler
 {
   constructor(private readonly repo: UsersRepository) {}
 
-  async execute({ id, active }: UpdateUserStatusCommand) {
+  async execute({ tenantId, id, active }: UpdateUserStatusCommand) {
     const user = await this.repo.findById(id);
-    if (!user || user.role !== 'user' || !user.company) {
+    if (!user || user.role !== 'user' || !user.company || user.tenantId !== tenantId) {
       throw new NotFoundException('Usuário não encontrado.');
     }
     if (

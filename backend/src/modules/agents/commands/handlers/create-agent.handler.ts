@@ -22,8 +22,8 @@ export class CreateAgentHandler implements ICommandHandler<CreateAgentCommand> {
     const identity = await this.repo.nextIdentity();
     const agent = await this.repo.create({ ...NEW_AGENT_DEFAULTS, ...fields, ...identity });
     const removed =
-      agent.clientId !== null
-        ? await this.repo.revokeFromOtherCompanies(agent.id, agent.clientId)
+      agent.tenantId !== null
+        ? await this.repo.revokeFromOtherCompanies(agent.id, agent.tenantId)
         : 0;
     await this.repo.addAudit(
       `Agente cadastrado: ${agent.internalName} · v${agent.version}` +

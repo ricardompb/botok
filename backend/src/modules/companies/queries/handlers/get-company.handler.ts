@@ -18,7 +18,7 @@ export class GetCompanyHandler implements IQueryHandler<GetCompanyQuery> {
     if (!company) throw new NotFoundException('Empresa não encontrada.');
     const [agents, active] = await Promise.all([
       this.agents.findAll(),
-      this.repo.activeUsersByCompany(),
+      this.repo.activeUsersByTenant(),
     ]);
     return {
       id: company.id,

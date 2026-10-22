@@ -20,7 +20,7 @@ export function AddUserForm({ companyId, onAdded }: Props) {
     e.preventDefault();
     if (!name.trim()) return;
     try {
-      await usersService.create({ companyId, name: name.trim(), email: email.trim() });
+      await usersService.create(companyId, { name: name.trim(), email: email.trim() });
       close();
       onAdded();
       toast('Usuário adicionado. Nenhum convite foi enviado.');

@@ -27,6 +27,10 @@ export class SupportRequest {
   @Column('uuid', { nullable: true })
   userId: string | null;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  /** Empresa do solicitante; null para administração ou antes do login. */
+  @Column('int', { nullable: true })
+  tenantId: number | null;
+
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'clock_timestamp()' })
   createdAt: Date;
 }

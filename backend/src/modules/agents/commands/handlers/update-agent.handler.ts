@@ -14,8 +14,8 @@ export class UpdateAgentHandler implements ICommandHandler<UpdateAgentCommand> {
     Object.assign(agent, await buildAgentFields(this.repo, dto, agent));
     await this.repo.save(agent);
     const removed =
-      agent.clientId !== null
-        ? await this.repo.revokeFromOtherCompanies(agent.id, agent.clientId)
+      agent.tenantId !== null
+        ? await this.repo.revokeFromOtherCompanies(agent.id, agent.tenantId)
         : 0;
     await this.repo.addAudit(
       `Agente atualizado: ${agent.internalName} · v${agent.version}` +

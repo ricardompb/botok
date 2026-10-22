@@ -1,19 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import type { DeepPartial } from 'typeorm';
+import { TenantDb } from '../../../common/tenancy/tenant-db.js';
 import { SupportRequest } from '../entities/support-request.entity.js';
 
 @Injectable()
 export class SupportRequestsRepository {
-  constructor(
-    @InjectRepository(SupportRequest)
-    private readonly repo: Repository<SupportRequest>,
-  ) {}
+  constructor(private readonly db: TenantDb) {}
 
-  /** Grava a solicitação e gera o protocolo a partir do identificador. */
+  /** Grava a solicitação no tenant atual e gera o protocolo a partir do identificador. */
   async create(data: DeepPartial<SupportRequest>) {
-    const request = await this.repo.save(this.repo.create(data));
+    const repo = this.db.repo(SupportRequest);
+    const request = await repo.save(repo.create({ ...data, tenantId: this.db.tenantId }));
     request.protocol = 'DEMO-' + String(request.id).padStart(4, '0');
-    return this.repo.save(request);
+    return repo.save(request);
   }
 }

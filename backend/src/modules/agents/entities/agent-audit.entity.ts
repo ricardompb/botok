@@ -12,6 +12,6 @@ export class AgentAudit {
   @Column({ length: 160 })
   author: string;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'clock_timestamp()' })
   createdAt: Date;
 }

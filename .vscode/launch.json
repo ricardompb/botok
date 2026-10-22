@@ -5,22 +5,18 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "node",
+      "type": "node-terminal",
       "request": "launch",
       "name": "BOTOK FRONT",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "serve"],
-      "cwd": "${workspaceFolder}/frontend",
-      "console": "integratedTerminal"
+      "command": "yarn run dev",
+      "cwd": "${workspaceFolder}/frontend"
     },
     {
-      "type": "node",
+      "type": "node-terminal",
       "request": "launch",
       "name": "BOTOK BACK DEBUG",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "start:debug"],
-      "cwd": "${workspaceFolder}/backend",
-      "console": "integratedTerminal"
+      "command": "yarn run start:debug",
+      "cwd": "${workspaceFolder}/backend"
     }
   ],
   "compounds": [

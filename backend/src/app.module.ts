@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TenancyModule } from './common/tenancy/tenancy.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AgentsModule } from './modules/agents/agents.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -13,6 +14,7 @@ import { UsersModule } from './modules/users/users.module.js';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
+    TenancyModule,
     AuthModule,
     UsersModule,
     CompaniesModule,

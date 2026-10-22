@@ -19,7 +19,7 @@ export class SendMessageHandler implements ICommandHandler<SendMessageCommand> {
   async execute({ user, dto }: SendMessageCommand) {
     const [agent, company] = await Promise.all([
       this.agents.findById(dto.agentId),
-      this.agents.findCompany(user.companyId!),
+      this.agents.findCompany(user.tenantId!),
     ]);
     if (!agent || !company || !isAvailableTo(agent, company)) {
       throw new ForbiddenException('Assistente indisponível para esta empresa.');
@@ -30,7 +30,7 @@ export class SendMessageHandler implements ICommandHandler<SendMessageCommand> {
         (await this.sessions.findOwned(dto.sessionId, user.id, agent.id))) ||
       (await this.sessions.create({
         agentId: agent.id,
-        companyId: company.id,
+        tenantId: company.id,
         userId: user.id,
       }));
 

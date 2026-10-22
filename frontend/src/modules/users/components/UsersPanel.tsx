@@ -35,7 +35,7 @@ export function UsersPanel({ companyId, licenses, users, onChanged }: Props) {
       return;
     }
     try {
-      const updated = await usersService.setActive(user.id, !user.active);
+      const updated = await usersService.setActive(companyId, user.id, !user.active);
       onChanged();
       toast(updated.active ? 'Usuário reativado na demonstração.' : 'Usuário suspenso na demonstração.');
     } catch (err) {

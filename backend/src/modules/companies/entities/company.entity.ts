@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Agent } from '../../agents/entities/agent.entity.js';
 
+/** Empresa cliente: cada empresa é um tenant (o `id` é o tenantId). */
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn()
@@ -27,10 +28,18 @@ export class Company {
   @Column('date')
   until: string;
 
+  /** Tenant Microsoft Entra da empresa, fixado no primeiro acesso de um usuário. */
+  @Column('uuid', { nullable: true })
+  entraTenantId: string | null;
+
   @ManyToMany(() => Agent)
-  @JoinTable({ name: 'company_agents' })
+  @JoinTable({
+    name: 'company_agents',
+    joinColumn: { name: 'tenantId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'agentId', referencedColumnName: 'id' },
+  })
   allowedAgents: Relation<Agent[]>;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ default: () => 'clock_timestamp()' })
   createdAt: Date;
 }

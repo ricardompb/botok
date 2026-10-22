@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcryptjs';
-import { Repository } from 'typeorm';
+import { applyRowLevelSecurity } from '../common/tenancy/rls.js';
+import { TenantDb } from '../common/tenancy/tenant-db.js';
 import { Agent } from '../modules/agents/entities/agent.entity.js';
 import { ChatSession } from '../modules/chat/entities/chat-session.entity.js';
 import { Company } from '../modules/companies/entities/company.entity.js';
@@ -17,45 +17,48 @@ import {
 } from './seed-data.js';
 
 const DAY = 24 * 60 * 60 * 1000;
+/** Serializa a inicialização entre instâncias que sobem juntas. */
+const BOOTSTRAP_LOCK = 7_420_001;
 
-/** Popula o banco vazio com o cenário do protótipo. */
+/** Aplica o Row-Level Security e popula o banco vazio com o cenário do protótipo. */
 @Injectable()
 export class SeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SeedService.name);
 
   constructor(
     private readonly config: ConfigService,
-    @InjectRepository(Agent) private readonly agents: Repository<Agent>,
-    @InjectRepository(Company) private readonly companies: Repository<Company>,
-    @InjectRepository(User) private readonly users: Repository<User>,
-    @InjectRepository(ChatSession)
-    private readonly sessions: Repository<ChatSession>,
+    private readonly db: TenantDb,
   ) {}
 
-  async onApplicationBootstrap() {
-    if (await this.agents.count()) return;
+  onApplicationBootstrap() {
+    return this.db.run({ kind: 'system' }, async () => {
+      const agents = this.db.repo(Agent);
+      await agents.query('SELECT pg_advisory_xact_lock($1)', [BOOTSTRAP_LOCK]);
+      await applyRowLevelSecurity(agents.manager);
+      if (!(await agents.count())) await this.seed();
+    });
+  }
 
-    const passwordHash = await bcrypt.hash(
-      this.config.get('DEFAULT_PASSWORD', 'botok123'),
-      10,
-    );
-    const agents = await this.agents.save(
+  private async seed() {
+    const agentsRepo = this.db.repo(Agent);
+    const companies = this.db.repo(Company);
+    const users = this.db.repo(User);
+    const sessions = this.db.repo(ChatSession);
+
+    const passwordHash = await bcrypt.hash(this.config.get('DEFAULT_PASSWORD', 'botok123'), 10);
+    const agents = await agentsRepo.save(
       SEED_AGENTS.map((a) =>
-        this.agents.create({
-          ...a,
-          ...SEED_AGENT_REGISTRY,
-          remoteId: `agent-${a.id}`,
-        }),
+        agentsRepo.create({ ...a, ...SEED_AGENT_REGISTRY, tenantId: null, remoteId: `agent-${a.id}` }),
       ),
     );
 
     const now = Date.now();
     let firstUserId = '';
-    let firstCompanyId = 0;
+    let firstTenantId = 0;
     for (const c of SEED_COMPANIES) {
       const [d, m, y] = c.until.split('/');
-      const company = await this.companies.save(
-        this.companies.create({
+      const company = await companies.save(
+        companies.create({
           name: c.name,
           licenses: c.licenses,
           quota: c.quota,
@@ -65,35 +68,28 @@ export class SeedService implements OnApplicationBootstrap {
       );
       // Um a um, para preservar a ordem de cadastro do protótipo.
       for (const u of c.users) {
-        const user = await this.users.save(
-          this.users.create({
+        const user = await users.save(
+          users.create({
             name: u.name,
             email: u.email,
             active: u.active,
             role: 'user',
             passwordHash,
-            companyId: company.id,
+            tenantId: company.id,
             lastAccessAt: new Date(now - SEED_LAST_ACCESS_DAYS[u.last] * DAY),
           }),
         );
         firstUserId ||= user.id;
       }
-      firstCompanyId ||= company.id;
+      firstTenantId ||= company.id;
     }
 
-    await this.users.save(
-      this.users.create({ ...SEED_ADMIN, role: 'admin', passwordHash }),
-    );
+    await users.save(users.create({ ...SEED_ADMIN, role: 'admin', passwordHash, tenantId: null }));
 
-    await this.sessions.save(
+    await sessions.save(
       Object.entries(SEED_USAGE).flatMap(([agentId, count]) =>
         Array.from({ length: count }, () =>
-          this.sessions.create({
-            agentId,
-            companyId: firstCompanyId,
-            userId: firstUserId,
-            messageCount: 2,
-          }),
+          sessions.create({ agentId, tenantId: firstTenantId, userId: firstUserId, messageCount: 2 }),
         ),
       ),
     );

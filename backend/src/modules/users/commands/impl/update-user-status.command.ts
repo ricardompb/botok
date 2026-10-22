@@ -3,6 +3,7 @@ import type { UserResponseDto } from '../../dto/user-response.dto.js';
 
 export class UpdateUserStatusCommand extends Command<UserResponseDto> {
   constructor(
+    public readonly tenantId: number,
     public readonly id: string,
     public readonly active: boolean,
   ) {

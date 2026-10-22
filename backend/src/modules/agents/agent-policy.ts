@@ -3,7 +3,7 @@ import type { Agent } from './entities/agent.entity.js';
 
 /** Agente que pode ser liberado para a empresa (genérico ou exclusivo dela). */
 export function canBeGranted(agent: Agent, companyId: number) {
-  return agent.scope === 'generic' || agent.clientId === companyId;
+  return agent.scope === 'generic' || agent.tenantId === companyId;
 }
 
 export function isEligible(agent: Agent, companyId: number) {

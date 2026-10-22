@@ -7,8 +7,8 @@ import { ListUsersQuery } from '../impl/list-users.query.js';
 export class ListUsersHandler implements IQueryHandler<ListUsersQuery> {
   constructor(private readonly repo: UsersRepository) {}
 
-  async execute({ companyId }: ListUsersQuery) {
-    const users = await this.repo.listByCompany(companyId);
+  async execute({ tenantId }: ListUsersQuery) {
+    const users = await this.repo.listByTenant(tenantId);
     return users.map(UserResponseDto.from);
   }
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiErrorMessage } from '../../../shared/api/api-error';
+import { entraEnabled, signInWithMicrosoft } from '../../../shared/auth/entra';
 import { Icon } from '../../../shared/components/Icon';
 import { useModal } from '../../../shared/hooks/use-modal';
 import { homePath, paths } from '../../../routes/paths';
@@ -13,7 +14,7 @@ export function LoginBox() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, loginError } = useAuth();
   const { open, close, dismiss, info } = useModal();
   const openSupport = useSupport();
   const navigate = useNavigate();
@@ -22,6 +23,14 @@ export function LoginBox() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
+    if (entraEnabled) {
+      // A senha e a verificação adicional (MFA) ficam na página da Microsoft.
+      await signInWithMicrosoft(email).catch(() => {
+        setError('Não foi possível abrir o login da Microsoft. Tente novamente.');
+        setSubmitting(false);
+      });
+      return;
+    }
     try {
       const auth = await authService.login({ email, password });
       setPassword('');
@@ -96,30 +105,34 @@ export function LoginBox() {
             autoComplete="off"
           />
         </div>
-        <div className="field">
-          <label htmlFor="password">Senha</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Demonstração — não informe sua senha real"
-            autoComplete="off"
-          />
-        </div>
-        {error && (
+        {!entraEnabled && (
+          <div className="field">
+            <label htmlFor="password">Senha</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Demonstração — não informe sua senha real"
+              autoComplete="off"
+            />
+          </div>
+        )}
+        {(error || loginError) && (
           <p className="error" role="alert">
-            {error}
+            {error || loginError}
           </p>
         )}
         <div className="row between" style={{ margin: '16px 0 23px' }}>
           <span className="small muted">Acesso individual</span>
-          <button type="button" className="text-link small" id="forgot" onClick={forgot}>
-            Esqueci minha senha
-          </button>
+          {!entraEnabled && (
+            <button type="button" className="text-link small" id="forgot" onClick={forgot}>
+              Esqueci minha senha
+            </button>
+          )}
         </div>
         <button className="button" type="submit" disabled={submitting}>
-          Entrar na demonstração <span>→</span>
+          {entraEnabled ? 'Entrar com Microsoft' : 'Entrar na demonstração'} <span>→</span>
         </button>
       </form>
       <div className="rule">proteção de acesso</div>

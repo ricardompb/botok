@@ -50,8 +50,9 @@ export class Agent {
   @Column({ length: 20 })
   scope: AgentScope;
 
+  /** null: agente genérico do catálogo global; preenchido: exclusivo da empresa (tenant). */
   @Column('int', { nullable: true })
-  clientId: number | null;
+  tenantId: number | null;
 
   @Column({ length: 20 })
   status: AgentStatus;
@@ -90,6 +91,6 @@ export class Agent {
   @Column({ default: false })
   tested: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ default: () => 'clock_timestamp()' })
   createdAt: Date;
 }
