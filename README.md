@@ -74,7 +74,24 @@ cd backend
 npm i @nestjs/cqrs @nestjs/typeorm typeorm pg @nestjs/config class-validator class-transformer @nestjs/jwt bcryptjs
 ```
 
-### Variáveis de ambiente (`backend/.env`)
+### Variáveis de ambiente (Azure Key Vault)
+
+As variáveis do backend vêm do **Azure Key Vault**. Na inicialização, antes de montar a aplicação, o backend lê os segredos do cofre com `DefaultAzureCredential` (identidade gerenciada em produção; `az login` em desenvolvimento) e os coloca em `process.env`.
+
+- **Nome do segredo** = nome da variável com `-` no lugar de `_` (`DB_PASSWORD` → `DB-PASSWORD`). A lista de variáveis lidas está em `backend/src/config/config-keys.ts`.
+- **Fora do cofre** (ambiente da plataforma): `AZURE_KEY_VAULT_URL`, `AZURE_CLIENT_ID` (identidade gerenciada atribuída pelo usuário, se houver), `NODE_ENV` e `PORT`.
+- **Produção** (`NODE_ENV=production`): `AZURE_KEY_VAULT_URL` é obrigatório, o `.env` nunca é lido e a inicialização falha se faltar uma variável obrigatória ou se o cofre não puder ser lido — não há fallback.
+- **Desenvolvimento**: sem `AZURE_KEY_VAULT_URL`, usa o `backend/.env` abaixo. Com ela, os valores do cofre prevalecem sobre o `.env`.
+- **Permissão**: a identidade do backend precisa da função **Key Vault Secrets User** no cofre (RBAC). Os valores nunca são registrados em log; apenas a quantidade de variáveis carregadas.
+- Os segredos são lidos na inicialização: após alterar um valor no cofre, reinicie o backend.
+
+Para enviar um `.env` ao cofre (exige `az login` com permissão de escrita, ex.: **Key Vault Secrets Officer**):
+
+```bash
+cd backend && npm run keyvault:push -- <nome-do-cofre> .env.producao
+```
+
+`backend/.env` (desenvolvimento sem cofre):
 
 ```
 DB_HOST=localhost
@@ -92,6 +109,7 @@ ENTRA_API_CLIENT_ID=
 ENTRA_API_SCOPE=access_as_user
 ENTRA_ADMIN_TENANT_ID=
 FOUNDRY_PROJECT_ENDPOINT=
+AZURE_KEY_VAULT_URL=
 ```
 
 - `FOUNDRY_PROJECT_ENDPOINT`: projeto Foundry dos agentes criados pelo seed (ver [Conversa com os agentes](#conversa-com-os-agentes-microsoft-foundry)).
@@ -308,6 +326,15 @@ Se a porta 5432 já estiver ocupada, use `POSTGRES_PORT=5433 docker compose up -
 | `/administracao/empresas/:companyId`  | Ambiente da empresa  | admin    |
 | `/administracao/agentes`              | Catálogo de agentes  | admin    |
 | `/sobre`                              | Sobre o projeto      | público  |
+
+## Documentação da API (Swagger)
+
+Com o backend rodando: **http://localhost:3000/docs** (interface) e **/docs/json** (OpenAPI 3).
+
+- Gerada com `@nestjs/swagger` e o **plugin do Nest CLI** (`nest-cli.json`): os schemas saem dos DTOs (tipos TypeScript + validações do `class-validator`) e os comentários JSDoc viram descrições e resumos. Ao criar um endpoint, use DTOs em classes e comente o método do controller; anotações manuais só para o que o plugin não infere (ex.: o streaming SSE de `/chat/messages`).
+- Rotas agrupadas por área (`@ApiTags`) e protegidas com **Bearer**: em **Authorize**, informe o access token do Entra ID (ou o token de `POST /auth/login` em desenvolvimento).
+- Em produção fica **desligada**; para expor, defina `SWAGGER_ENABLED=true` (no Key Vault: `SWAGGER-ENABLED`).
+- O plugin atua na compilação do Nest CLI: após alterar o `nest-cli.json`, reinicie o `npm run start:dev`.
 
 ## Conversa com os agentes (Microsoft Foundry)
 

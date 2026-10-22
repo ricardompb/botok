@@ -69,6 +69,10 @@ export class AgentAdminDto {
   linkedCompanies: number;
 }
 
+export class AgentIdDto {
+  id: string;
+}
+
 export class AgentAuditDto {
   action: string;
   author: string;

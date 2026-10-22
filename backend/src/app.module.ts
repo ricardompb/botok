@@ -12,7 +12,8 @@ import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // Variáveis já carregadas em process.env por loadConfiguration (Key Vault ou .env).
+    ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
     DatabaseModule,
     TenancyModule,
     AuthModule,

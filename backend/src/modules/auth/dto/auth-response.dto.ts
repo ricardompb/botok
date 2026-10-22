@@ -1,12 +1,18 @@
 import type { UserRole } from '../../../common/auth/auth-user.js';
 import type { User } from '../../users/entities/user.entity.js';
 
+export class CompanyRefDto {
+  id: number;
+  name: string;
+}
+
 export class MeResponseDto {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  company: { id: number; name: string } | null;
+  /** Empresa (tenant) do usuário; null para a administração IT’s OK. */
+  company: CompanyRefDto | null;
 
   static from(user: User): MeResponseDto {
     return {
